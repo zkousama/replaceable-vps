@@ -1,0 +1,64 @@
+# Every check here runs without credentials and without touching an account,
+# which sets what they can tell you. `tofu validate` proves the configuration
+# parses and type-checks. `--syntax-check` proves the playbooks are well
+# formed. Neither says anything about whether an apply produces a working
+# server, and nothing here can until somebody provisions one.
+
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  iac:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/iac
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.11.7
+
+      - name: Formatting
+        run: tofu fmt -check -recursive
+
+      # -backend=false, so this needs no state bucket and no credentials. It
+      # still reaches the registry for the providers, so the lock file's
+      # checksums get verified on every run.
+      - name: Providers
+        run: tofu init -backend=false
+
+      - name: Validate
+        run: tofu validate
+
+  ansible:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/ansible
+    steps:
+      - uses: actions/checkout@v4
+
+      # pipx rather than pip: the runner's Python is externally managed and a
+      # plain pip install fails on it.
+      - name: Install Ansible
+        run: pipx install ansible-core
+
+      - name: Install collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      # The example inventory, not a real one, so this runs against exactly
+      # what a fresh clone contains.
+      - name: Syntax
+        run: ansible-playbook -i inventory.example.ini --syntax-check site.yml bootstrap.yml
+
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck
+        run: shellcheck -S style scripts/*.sh

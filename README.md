@@ -38,6 +38,9 @@ tofu init -backend-config="endpoints={s3=\"https://<account>.r2.cloudflarestorag
 tofu apply
 ```
 
+`ssh_source_cidrs` has no default. Who can reach SSH is a decision, not
+something to inherit from a file you skimmed.
+
 Then configure the machine. Bootstrap runs once, as root on port 22, because
 that is the only state a new server is in:
 
@@ -131,6 +134,14 @@ It also stops short of deploying anything. What you get is a hardened host with
 Docker on it and a DNS record that resolves to it; whatever runs there is a
 separate concern. Keeping the two apart is why you can replace the machine
 without touching the application.
+
+## Checks
+
+`tofu fmt`, `tofu validate` against the real providers, `--syntax-check` on
+both playbooks and shellcheck on both scripts, on every push. All of it runs
+without credentials, which is also the ceiling: these prove the configuration
+parses and type-checks and that the playbooks are well formed. They cannot
+prove an apply produces a working server.
 
 ## Licence
 
