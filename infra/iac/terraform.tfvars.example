@@ -1,7 +1,7 @@
 # Copy to terraform.tfvars, which is gitignored.
 
 server_name     = "prod"
-server_type     = "cx22"
+server_type     = "cx23"
 server_location = "nbg1"
 server_image    = "ubuntu-24.04"
 

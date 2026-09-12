@@ -7,14 +7,19 @@ variable "server_name" {
 variable "server_type" {
   type        = string
   description = <<-EOT
-    Hetzner server type. The one thing to know: a rescale can move within a
-    line but not between them, so cx22 to cx32 is an in-place resize and cpx22
+        Hetzner server type. The one thing to know: a rescale can move within a
+    line but not between them, so cx23 to cx33 is an in-place resize and cpx22
     to cx33 is a replacement. docs/replace-a-server.md is the second case.
+
+    Check the type is still sold before relying on a default here. Hetzner
+    retires them: cx22 was this default until an apply failed with "Server Type
+    cx22 is unavailable and can no longer be ordered", and the whole CPX line
+    has left the European datacentres.
 
     Move this default the moment a replacement applies cleanly. Leaving it at
     the old value means the next plan quietly proposes rescaling back.
   EOT
-  default     = "cx22"
+  default     = "cx23"
 }
 
 variable "server_location" {
