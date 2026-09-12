@@ -1,0 +1,7 @@
+# Reloaded rather than restarted where it can be: with live-restore on, a
+# reload picks up the log settings without stopping the containers, and a
+# config change is not a reason to take the site down.
+- name: Restart docker
+  ansible.builtin.systemd_service:
+    name: docker
+    state: reloaded

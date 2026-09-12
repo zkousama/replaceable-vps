@@ -1,0 +1,72 @@
+# Docker's own apt repository, not the distribution's package. The
+# distribution ships docker.io, which is a different, older thing and does not
+# carry the compose plugin.
+# Present on 24.04, absent on 22.04, and get_url will not create it.
+- name: Make room for the keyring
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the repository key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add the repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}
+      signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu
+      {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+
+- name: Install the engine and the plugins
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+# The default is unbounded json-file logging. A container that writes a line
+# per request will eventually be the reason the disk is full, and the symptom
+# will look like a database problem.
+- name: Cap the log files
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "{{ docker_log_max_size }}",
+          "max-file": "{{ docker_log_max_file }}"
+        },
+        "live-restore": true
+      }
+  notify: Restart docker
+
+- name: Let ops use docker without sudo
+  ansible.builtin.user:
+    name: "{{ ops_user }}"
+    groups: docker
+    append: true
+
+- name: Start it
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started

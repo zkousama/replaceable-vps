@@ -1,0 +1,19 @@
+# The configured state of the machine. Run it whenever anything in here
+# changes, and run it twice when you do: the second run reporting changed=0 is
+# the only evidence that these roles are actually idempotent, and it is what
+# makes a snapshot of this machine a known quantity rather than a mystery.
+#
+#   ansible-playbook site.yml -l prod
+#
+- name: Configure the host
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - base
+    - ssh
+    - firewall
+    - fail2ban
+    - auto-updates
+    - docker

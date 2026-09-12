@@ -1,0 +1,45 @@
+- name: Enable the daily update and upgrade timers
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      // Managed by Ansible.
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      APT::Periodic::AutocleanInterval "7";
+
+- name: Take security updates only, and never reboot on their own
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/52unattended-upgrades-local
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      // Managed by Ansible.
+      //
+      // Security only. The full -updates pocket would install new minor
+      // versions of anything on the box at 6am, which is a different risk
+      // from being unpatched and a worse one to discover from a customer.
+      Unattended-Upgrade::Allowed-Origins {
+        "${distro_id}:${distro_codename}-security";
+        "${distro_id}ESMApps:${distro_codename}-apps-security";
+        "${distro_id}ESM:${distro_codename}-infra-security";
+      };
+      Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+      Unattended-Upgrade::Remove-Unused-Dependencies "true";
+      //
+      // A kernel update needs a reboot to take effect and this will not do it
+      // for you. Check `/var/run/reboot-required` when you are looking, and
+      // pick the minute yourself.
+      Unattended-Upgrade::Automatic-Reboot "false";
+
+- name: Start the timers
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - apt-daily.timer
+    - apt-daily-upgrade.timer

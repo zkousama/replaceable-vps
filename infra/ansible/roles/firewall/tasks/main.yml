@@ -1,0 +1,33 @@
+# The host firewall, inside the provider's one. Two layers because they fail
+# differently: the cloud firewall is a checkbox in an account somebody else can
+# change, and ufw is a file on the machine that a snapshot carries with it.
+- name: Default to denying inbound
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Allow outbound
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Allow ssh from the addresses that are allowed to have it
+  community.general.ufw:
+    rule: limit
+    port: "{{ ssh_port }}"
+    proto: tcp
+    src: "{{ item }}"
+  loop: "{{ ssh_allowed_cidrs }}"
+
+- name: Allow http and https
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "80"
+    - "443"
+
+- name: Enable it
+  community.general.ufw:
+    state: enabled

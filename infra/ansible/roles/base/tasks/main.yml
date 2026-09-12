@@ -1,0 +1,28 @@
+- name: Refresh the package index
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install the packages every later role assumes
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - python3-apt # the apt module needs it on a minimal image
+    state: present
+
+- name: Set the timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+# Not `state: latest` on everything, and not a full dist-upgrade either. The
+# auto-updates role installs security updates on a schedule; a playbook that
+# also upgrades the world means an unrelated config change can drag in a new
+# database minor version at a moment nobody chose.
+- name: Apply pending security updates
+  ansible.builtin.apt:
+    upgrade: safe

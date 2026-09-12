@@ -1,0 +1,32 @@
+# The package ships a jail for sshd that watches port 22. Moving sshd without
+# telling fail2ban leaves it running, reporting healthy, and watching nothing.
+- name: Configure the sshd jail
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by Ansible.
+      [DEFAULT]
+      backend = systemd
+      findtime = 10m
+      bantime = 1h
+      # Each repeat ban lasts longer than the last, so a persistent source
+      # removes itself from the logs without anybody deciding how long
+      # forever should be.
+      bantime.increment = true
+      bantime.factor = 2
+      bantime.maxtime = 1w
+
+      [sshd]
+      enabled = true
+      port = {{ ssh_port }}
+      maxretry = 4
+  notify: Restart fail2ban
+
+- name: Start it
+  ansible.builtin.systemd_service:
+    name: fail2ban
+    enabled: true
+    state: started
