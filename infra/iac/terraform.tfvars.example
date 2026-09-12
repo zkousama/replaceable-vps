@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars, which is gitignored.
+
+server_name     = "prod"
+server_type     = "cx22"
+server_location = "nbg1"
+server_image    = "ubuntu-24.04"
+
+ssh_key_name = "ops-primary"
+
+# 22 until the bootstrap playbook has moved sshd, then just the new port.
+ssh_ports        = [22]
+ssh_source_cidrs = ["203.0.113.4/32"]

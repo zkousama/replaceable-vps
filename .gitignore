@@ -1,0 +1,17 @@
+# Local values and state. Everything here either identifies somebody or can
+# log in as them.
+*.tfvars
+!*.tfvars.example
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+
+infra/ansible/inventory.ini
+infra/ansible/group_vars/all.yml
+*.retry
+
+# Editor and OS noise
+.DS_Store
+*.swp
