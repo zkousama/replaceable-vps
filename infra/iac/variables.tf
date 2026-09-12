@@ -38,25 +38,46 @@ variable "ssh_key_name" {
   description = "Name of a key already uploaded to the provider project."
 }
 
-variable "ssh_ports" {
-  type        = list(number)
+variable "ssh_port" {
+  type        = number
   description = <<-EOT
-    Ports the firewall accepts SSH on. Keep 22 in this list until the bootstrap
-    playbook has moved sshd, then drop it: the first connection to a fresh
-    machine has to land on 22, and a firewall that only opens the new port
-    locks you out of the box you are about to configure.
+    Port sshd listens on once the bootstrap playbook has moved it.
+
+    Ansible reads the same number from its own group_vars and the two have to
+    agree. An earlier version of this had a list here and a scalar there,
+    which is a quiet way to end up with a firewall opening a port sshd is not
+    listening on.
   EOT
-  default     = [22]
+  default     = 22
+}
+
+variable "allow_default_ssh_port" {
+  type        = bool
+  description = <<-EOT
+    Keep 22 open alongside ssh_port. True until the bootstrap playbook has
+    moved sshd, false afterwards.
+
+    The first connection to a fresh machine has to land on 22, so a firewall
+    that only opens the new port locks you out of the box you are about to
+    configure.
+  EOT
+  default     = true
 }
 
 variable "ssh_source_cidrs" {
   type        = list(string)
   description = <<-EOT
-    Who may reach SSH. Defaulted to nothing, so an unset value denies rather
-    than publishes. A fixed address or a VPN range is the point of this; if it ends up as 0.0.0.0/0 then fail2ban and key-only
-    auth are what's left, and the playbook sets up both.
+    Who may reach SSH. A fixed address or a VPN range is the point of this; if
+    it ends up as ["0.0.0.0/0", "::/0"] then fail2ban and key-only auth are
+    what is left, and the playbook sets up both.
+
+    No default, so this is a decision rather than something you inherit.
   EOT
-  default     = []
+
+  validation {
+    condition     = length(var.ssh_source_cidrs) > 0
+    error_message = "ssh_source_cidrs is empty, which builds a firewall rule with no sources. Name at least one CIDR, or [\"0.0.0.0/0\", \"::/0\"] if you mean anywhere."
+  }
 }
 
 variable "web_ports" {

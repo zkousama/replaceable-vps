@@ -23,5 +23,5 @@ output "location" {
 # Written for the Ansible inventory rather than for reading. The playbook needs
 # an address and a port, and copying them by hand is how they go stale.
 output "inventory_line" {
-  value = "${var.server_name} ansible_host=${hcloud_server.prod.ipv4_address} ansible_port=${var.ssh_ports[length(var.ssh_ports) - 1]}"
+  value = "${var.server_name} ansible_host=${hcloud_server.prod.ipv4_address} ansible_port=${var.ssh_port}"
 }

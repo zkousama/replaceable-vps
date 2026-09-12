@@ -2,6 +2,14 @@ data "hcloud_ssh_key" "ops" {
   name = var.ssh_key_name
 }
 
+locals {
+  # 22 stays open next to the real port until bootstrap has moved sshd.
+  ssh_ports = distinct(concat(
+    [var.ssh_port],
+    var.allow_default_ssh_port ? [22] : [],
+  ))
+}
+
 # The outer layer, at the provider's edge, before a packet reaches the machine.
 # The playbook sets up a host firewall as well; this one drops traffic that
 # never gets far enough to be logged on the box.
@@ -19,7 +27,7 @@ resource "hcloud_firewall" "baseline" {
   }
 
   dynamic "rule" {
-    for_each = toset(var.ssh_ports)
+    for_each = toset(local.ssh_ports)
     content {
       direction  = "in"
       protocol   = "tcp"

@@ -5,8 +5,11 @@
 *.tfstate
 *.tfstate.*
 .terraform/
-.terraform.lock.hcl
 crash.log
+
+# .terraform.lock.hcl is NOT here on purpose. It pins the exact provider
+# versions and their hashes, which is the difference between everyone getting
+# the same providers and everyone getting whatever was newest that morning.
 
 infra/ansible/inventory.ini
 infra/ansible/group_vars/all.yml
