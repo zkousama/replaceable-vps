@@ -41,16 +41,33 @@ tofu apply
 `ssh_source_cidrs` has no default. Who can reach SSH is a decision, not
 something to inherit from a file you skimmed.
 
+`CLOUDFLARE_API_TOKEN` has to be set even before a single DNS record exists.
+The records are declared in the configuration, so OpenTofu configures their
+provider on every plan, and the error when it is missing talks about `api_key`
+rather than about DNS.
+
 Then configure the machine. Bootstrap runs once, as root on port 22, because
-that is the only state a new server is in:
+that is the state a new server arrives in:
 
 ```sh
 cd ../ansible
 cp inventory.example.ini inventory.ini         # tofu output -raw inventory_line
 cp group_vars/all.yml.example group_vars/all.yml
-ansible-playbook bootstrap.yml -l prod -u root -e ansible_port=22
+
+# Ansible will not connect to a host it has never seen, and it is right not
+# to. This trusts the key on first use; the paranoid version reads the
+# fingerprint off the server's console before accepting it.
+ssh-keyscan -p 22 -t ed25519 <the ip> >> ~/.ssh/known_hosts
+
+ansible-playbook bootstrap.yml -l prod -e ansible_port=22
+ssh-keyscan -p <ssh_port> -t ed25519 <the ip> >> ~/.ssh/known_hosts
 ansible-playbook site.yml -l prod
 ```
+
+The port is `-e` rather than `-u`-style flags because extra vars are the only
+level that outranks the inventory. There is no `-u root` here for the same
+reason: the playbook's own plays set the user, and an `ansible_user` in the
+inventory would beat both.
 
 Run `site.yml` twice. If the second run reports `changed=0` the roles are
 idempotent; if it doesn't, something in them rewrites a file on every pass, and
@@ -124,9 +141,16 @@ without touching the application.
 
 `tofu fmt`, `tofu validate` against the real providers, `--syntax-check` on
 both playbooks and shellcheck on both scripts, on every push. All of it runs
-without credentials, which is also the ceiling: these prove the configuration
-parses and type-checks and that the playbooks are well formed. They cannot
-prove an apply produces a working server.
+without credentials, which is also its ceiling: it proves the configuration
+parses and the playbooks are well formed, and nothing more.
+
+The rest was done by hand on 12 September 2026: a cx23 in nbg1 provisioned
+from these files, bootstrapped, and converged with `site.yml`, which reported
+`changed=0` on its second run. Verified on the box afterwards: sshd on the
+moved port with root and password logins off, ufw active, fail2ban watching
+that same port, Docker with its logs capped, and unattended upgrades taking
+security only. 5 things were broken when that run started and are fixed here.
+The server was destroyed the same hour.
 
 ## Licence
 
