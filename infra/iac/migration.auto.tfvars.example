@@ -1,0 +1,12 @@
+# Copy to migration.auto.tfvars for a replacement, and DELETE IT AFTERWARDS.
+#
+# The .auto. means it is loaded without being named on the command line, and
+# the file being on disk is the reminder that the safety catches are off. That
+# is the whole reason it is a separate file rather than 4 edits in
+# terraform.tfvars: you cannot forget to undo a file you have to delete.
+
+server_type  = "cx33"
+server_image = "<snapshot id>"
+
+delete_protection  = false
+rebuild_protection = false
