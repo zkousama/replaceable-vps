@@ -42,12 +42,19 @@
         mode: "0440"
         validate: /usr/sbin/visudo -csf %s
 
-    - name: Prove the new account works before locking the old way out
-      ansible.builtin.command:
-        cmd: "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -p 22 {{ ops_user }}@{{ ansible_host }} true"
-      delegate_to: localhost
-      become: false
-      changed_when: false
+# Its own play, connecting as the new user through the same code path every
+# later run uses. This was a shell-out to bare `ssh` from the control machine,
+# which passed no key and so failed whenever the ops key was not one of the
+# operator's default identities. The account was fine; the check was wrong, and
+# it stopped the run immediately before the hardening step.
+- name: Check the new account before locking the old way out
+  hosts: all
+  remote_user: "{{ ops_user }}"
+  gather_facts: false
+
+  tasks:
+    - name: Connect as ops
+      ansible.builtin.ping:
 
 - name: Harden the way in
   hosts: all

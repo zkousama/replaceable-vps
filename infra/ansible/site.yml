@@ -7,6 +7,7 @@
 #
 - name: Configure the host
   hosts: all
+  remote_user: "{{ ops_user }}"
   become: true
   gather_facts: true
 
