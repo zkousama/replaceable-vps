@@ -55,7 +55,7 @@ if [ -z "${AWS_ACCESS_KEY_ID:-}" ]; then
 elif [ "${#AWS_ACCESS_KEY_ID}" -eq 32 ]; then
   ok "state-backend key is R2-shaped (32 characters)"
 elif [ "${#AWS_ACCESS_KEY_ID}" -eq 20 ]; then
-  bad "state-backend key is AWS-shaped (20 characters) — wrong credentials for an R2 backend"
+  bad "state-backend key is AWS-shaped (20 characters): wrong credentials for an R2 backend"
 else
   bad "state-backend key is ${#AWS_ACCESS_KEY_ID} characters, which is neither AWS nor R2"
 fi

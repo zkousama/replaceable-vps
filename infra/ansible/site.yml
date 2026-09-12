@@ -1,7 +1,7 @@
 # The configured state of the machine. Run it whenever anything in here
-# changes, and run it twice when you do: the second run reporting changed=0 is
-# the only evidence that these roles are actually idempotent, and it is what
-# makes a snapshot of this machine a known quantity rather than a mystery.
+# changes, and run it twice when you do. If the second run reports changed=0
+# the roles are idempotent; if it does not, one of them is rewriting a file on
+# every pass, and a snapshot of this machine will carry whatever that is.
 #
 #   ansible-playbook site.yml -l prod
 #

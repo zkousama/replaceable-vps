@@ -53,9 +53,8 @@ variable "ssh_source_cidrs" {
   type        = list(string)
   description = <<-EOT
     Who may reach SSH. Defaulted to nothing, so an unset value denies rather
-    than publishes. A fixed address or a VPN range is the point of this; if it
-    ends up as 0.0.0.0/0 then fail2ban and key-only auth are the whole defence
-    and the playbook sets both up.
+    than publishes. A fixed address or a VPN range is the point of this; if it ends up as 0.0.0.0/0 then fail2ban and key-only
+    auth are what's left, and the playbook sets up both.
   EOT
   default     = []
 }

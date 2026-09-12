@@ -1,13 +1,13 @@
 # One VPS, described in files
 
-OpenTofu and Ansible for a single Hetzner box that runs Docker: the server,
-its firewall, the DNS records that point at it, and the configuration on top.
-Small on purpose. It is the shape of a one-server deployment where the
-interesting question is not how to scale it but how to replace it without a
-bad afternoon.
+OpenTofu and Ansible for a single Hetzner box that runs Docker: the server, its
+firewall, the DNS records that point at it, and the configuration on top. It's
+deliberately small. What it's built for is being able to throw the machine away
+and get an identical one, which is something you want on the day a provider
+changes its prices or the plan you're on stops being the cheap one.
 
-The thing worth copying is in [`infra/iac/dns.tf`](infra/iac/dns.tf), and it is
-one line:
+The whole repository is arranged around one line, in
+[`infra/iac/dns.tf`](infra/iac/dns.tf):
 
 ```hcl
 content = hcloud_server.prod.ipv4_address
@@ -50,9 +50,9 @@ ansible-playbook bootstrap.yml -l prod -u root -e ansible_port=22
 ansible-playbook site.yml -l prod
 ```
 
-Run `site.yml` twice. The second run reporting `changed=0` is the only
-evidence the roles are idempotent, and it is what makes a snapshot of this
-machine a known quantity instead of a mystery you are cloning.
+Run `site.yml` twice. If the second run reports `changed=0` the roles are
+idempotent; if it doesn't, something in them rewrites a file on every pass, and
+a snapshot of the machine will carry whatever that is.
 
 To replace the machine later: [docs/replace-a-server.md](docs/replace-a-server.md).
 
@@ -74,13 +74,12 @@ and pushes a notification when the answer changes for the better:
 ```
 
 It compares against the last answer it wrote down, so the notification hangs
-off the transition rather than the state. A check that fires on the state sends
-a push every half hour once the answer turns good, and a channel that repeats
-itself is one you have stopped reading by the time it says something you need.
+off the transition rather than the state. Fire on the state instead and cron
+pushes every half hour from the moment capacity appears, which is a channel
+you'll mute inside a day.
 
-It needs curl and python3 and nothing else in this repository, so it is usable
-on its own. Send a test push before trusting it: an alerting path you have not
-seen work is a guess.
+It needs curl and python3 and nothing else from this repository, so it works on
+its own. Send a test push and watch it arrive before you leave it running.
 
 ## Decisions, with the reasons
 
@@ -90,20 +89,20 @@ are 32 characters where AWS keys are 20, and mixing them up produces an error
 about key length that takes a while to recognise, so `scripts/preflight.sh`
 checks the shape.
 
-**Two firewalls.** The provider's, at the edge, and ufw on the machine. They
-fail differently: one is a setting in an account somebody else can change, the
-other is a file a snapshot carries with it.
+**Two firewalls.** The provider's at the edge, ufw on the machine. The
+provider's is a setting in an account that other people can change, and ufw is
+a file on the box that a snapshot carries along with everything else.
 
-**SSH off its default port.** This stops nothing determined. It empties the
-logs of the untargeted scanning that makes a real attempt hard to see. Key-only
-auth, `AllowUsers`, and fail2ban are the parts that matter, and moving the port
-means telling fail2ban too, or it runs happily and watches nothing.
+**SSH off its default port.** The reason is log volume rather than security:
+untargeted scanning stops filling the auth log, so a real attempt is easier to
+spot. Key-only auth, `AllowUsers` and fail2ban do the actual work. Moving the
+port means telling fail2ban about it too, or its jail sits there watching a
+port nothing uses.
 
 **`prevent_destroy` on the server, hardcoded.** The provider-side delete
 protection blocks the API and the console but not `tofu destroy`, which is a
-different path. `prevent_destroy` is the only thing that blocks that one, and
-it cannot be a variable because OpenTofu still does not accept them in
-meta-arguments. A deliberate replacement comments it out in a commit that says
+different path. `prevent_destroy` is what blocks that path, and it can't be a variable because
+OpenTofu still doesn't accept them in meta-arguments. A deliberate replacement comments it out in a commit that says
 why, and the commit restoring it is the other half of the pair.
 
 **`ignore_changes = [image]`.** Image slugs resolve to numeric ids that rotate
@@ -114,24 +113,25 @@ the honest way round: the variable says where the new machine comes from, the
 flag asks for a new machine at all.
 
 **Security updates only, and no automatic reboot.** Taking the whole updates
-pocket unattended means new minor versions of everything at 6am, which is a
-different risk from being unpatched and a worse one to hear about from someone
-else. Kernel updates still need a reboot; `/var/run/reboot-required` says when,
-and you pick the minute.
+pocket unattended means new minor versions of anything on the box arriving at
+6am, unannounced. Kernel updates still need a reboot; `/var/run/reboot-required`
+says when, and you pick the minute.
 
-**Docker logs capped.** The default is unbounded, and an uncapped log is how a
-disk fills up 8 months after anybody last looked, presenting as a database
-problem.
+**Docker logs capped.** The default is unbounded. An uncapped log will fill the
+disk eventually, and when it does it looks like a database problem for the
+first 20 minutes.
 
-## What this is not
+## Scope
 
-No load balancer, no second server, no Kubernetes, no service mesh. One box
-with a reverse proxy in front of containers, which is the right size for a lot
-of things and the wrong size for the rest.
+One machine, with a reverse proxy in front of containers. If you need 2 servers
+or an orchestrator, start somewhere else: there's nothing here about load
+balancing, scheduling or service discovery, and adding it would mean rewriting
+most of `server.tf`.
 
-It also does not deploy applications. It gets you a hardened host with Docker
-and a working DNS record; what runs on it is a separate concern, and mixing the
-two is how you end up unable to touch the machine without redeploying the app.
+It also stops short of deploying anything. What you get is a hardened host with
+Docker on it and a DNS record that resolves to it; whatever runs there is a
+separate concern. Keeping the two apart is why you can replace the machine
+without touching the application.
 
 ## Licence
 

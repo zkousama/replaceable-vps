@@ -57,8 +57,7 @@ resource "hcloud_server" "prod" {
   lifecycle {
     # The provider-side flags above stop a delete through the API or the
     # console. They do NOT stop `tofu destroy`, which is a different path, so
-    # this is the only thing standing between a mistyped command and the
-    # machine. It cannot be a variable: OpenTofu still does not accept them in
+    # without it a mistyped `tofu destroy` takes the machine with it. It cannot be a variable: OpenTofu still does not accept them in
     # meta-arguments.
     #
     # A deliberate replacement means commenting this line out, in a commit

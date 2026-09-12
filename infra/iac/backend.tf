@@ -2,7 +2,7 @@ terraform {
   # State lives in S3-compatible object storage. Cloudflare R2 works and is
   # what this was written against; any S3 bucket does.
   #
-  # Nothing identifying is in here on purpose. The endpoint hostname contains
+  # Nothing identifying is committed here. The endpoint hostname contains
   # the account id, so it is passed at init time instead:
   #
   #   tofu init \

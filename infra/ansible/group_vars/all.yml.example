@@ -20,7 +20,7 @@ ssh_allowed_cidrs:
 
 timezone: Etc/UTC
 
-# Docker's default is unbounded JSON logs, which is how a disk fills up 8
-# months after anybody last looked at it.
+# Docker's default is unbounded JSON logs, which will fill the disk
+# eventually.
 docker_log_max_size: 10m
 docker_log_max_file: "3"

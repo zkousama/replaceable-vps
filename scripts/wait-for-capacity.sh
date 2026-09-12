@@ -12,12 +12,12 @@
 #   HCLOUD_TOKEN=... NTFY_URL=https://ntfy.sh/<topic> \
 #     ./wait-for-capacity.sh --type cx33 --locations nbg1,hel1
 #
-# From cron, which is the point of it:
+# From cron:
 #   */30 * * * * HCLOUD_TOKEN=... NTFY_URL=... /usr/local/bin/wait-for-capacity.sh --type cx33 --locations nbg1,hel1 >> /var/log/capacity.log 2>&1
 #
-# Exit status is 0 whether or not there is capacity: not yet is an answer, not
-# a failure. Only a broken run (no token, API error, no such type) exits 1, so
-# cron mail means something went wrong rather than "still waiting".
+# Exit status is 0 whether or not there is capacity: "not yet" is an answer
+# rather than a failure. Only a broken run exits 1 (a missing token, an API
+# error, an unknown type), so cron mail means something actually went wrong.
 set -euo pipefail
 
 TYPE=""
@@ -70,8 +70,8 @@ print(types[0]["id"] if types else "")
 [ -n "$type_id" ] || { echo "error: no server type named $TYPE" >&2; exit 1; }
 
 # One request for every datacentre, then filter locally. Asking about a
-# location gets you its datacentres; asking about a datacentre gets you what it
-# can actually sell today, which is the only question that matters.
+# location gets you its datacentres; asking about a datacentre gets you what
+# it can actually sell today.
 datacenters_json=$(api "datacenters")
 available=$(
   printf '%s' "$datacenters_json" | python3 -c '

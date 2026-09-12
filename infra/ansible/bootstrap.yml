@@ -2,14 +2,13 @@
 #
 #   ansible-playbook bootstrap.yml -l prod -u root -e ansible_port=22
 #
-# It connects as root on port 22, which is the only state a new server is in,
-# creates the unprivileged user, and moves sshd. From then on every run uses
+# It connects as root on port 22, the state a new server arrives in, creates
+# the unprivileged user, and moves sshd. From then on every run uses
 # the inventory's own user and port and this file is history.
 #
-# Not merged into site.yml on purpose. A playbook that has to work both before
-# and after it has changed the way you connect ends up full of conditionals
-# about which state it is in, and that is exactly the kind of code that fails
-# at the moment you need it most.
+# This stays out of site.yml. A playbook that has to work both before and
+# after it changes the way you connect fills up with conditionals about which
+# state it is in, and nobody ever tests the branch that only runs once.
 - name: Bootstrap a new host
   hosts: all
   remote_user: root
@@ -30,10 +29,10 @@
         key: "{{ lookup('file', ops_public_key_file) }}"
         state: present
 
-    # Passwordless, and worth being deliberate about: every subsequent run is
-    # non-interactive, and the alternative is a sudo password sitting in a
-    # vault that the automation has to read anyway. The account has no
-    # password to guess and no password login to try it on.
+        # Passwordless sudo. Every later run is non-interactive, and the
+    # alternative is a sudo password in a vault that the automation has to
+    # read anyway. The account has no password to guess and no password login
+    # to try it on.
     - name: Let ops sudo without a password
       ansible.builtin.copy:
         dest: "/etc/sudoers.d/90-{{ ops_user }}"

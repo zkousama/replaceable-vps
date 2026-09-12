@@ -5,8 +5,7 @@
     daemon_reload: true
 
 # Restarting the socket drops the listener and puts it back on the new port.
-# Existing sessions survive it, which is the only reason this is safe to do
-# from a connection that is itself over ssh.
+# Existing sessions survive that, so it is safe to run over ssh.
 - name: Restart ssh socket
   ansible.builtin.systemd_service:
     name: ssh.socket
