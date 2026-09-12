@@ -1,10 +1,9 @@
 # One VPS, described in files
 
 OpenTofu and Ansible for a single Hetzner box that runs Docker: the server, its
-firewall, the DNS records that point at it, and the configuration on top. It's
-deliberately small. What it's built for is being able to throw the machine away
-and get an identical one, which is something you want on the day a provider
-changes its prices or the plan you're on stops being the cheap one.
+firewall, the DNS records that point at it, and the configuration on top. It's deliberately small, and built around one operation: replacing the
+machine with an identical one. That's what you want on the day your provider
+reprices its lineup, or the plan you're on stops being the cheap one.
 
 The whole repository is arranged around one line, in
 [`infra/iac/dns.tf`](infra/iac/dns.tf):
@@ -58,11 +57,10 @@ To replace the machine later: [docs/replace-a-server.md](docs/replace-a-server.m
 
 ## Waiting for capacity
 
-Sold out is a real answer from a cloud provider, and there is no announcement
-when it stops being true. The newer server types in particular spend weeks in
-limited availability, so a plan that depends on one is a plan that waits.
-`tofu apply` reports this as `resource_unavailable`, with no hint that capacity
-is the problem.
+Cloud providers do run out of a server type, and nothing announces it when
+they stop. Newer types can spend weeks in limited availability. `tofu apply`
+reports it as `resource_unavailable`, which doesn't say whether the problem is
+the type, the location or your account.
 
 [`scripts/wait-for-capacity.sh`](scripts/wait-for-capacity.sh) asks the API
 which of the locations you would accept can currently sell the type you want,
@@ -112,10 +110,11 @@ the distribution publishes a build. It also means a replacement is driven by
 the honest way round: the variable says where the new machine comes from, the
 flag asks for a new machine at all.
 
-**Security updates only, and no automatic reboot.** Taking the whole updates
-pocket unattended means new minor versions of anything on the box arriving at
-6am, unannounced. Kernel updates still need a reboot; `/var/run/reboot-required`
-says when, and you pick the minute.
+**Security updates only, and no automatic reboot.** Unattended upgrades can
+take every available update, not just the security ones, which means new minor
+versions of anything on the box arriving at 6am unannounced. Kernel updates
+still need a reboot; `/var/run/reboot-required` says when one is pending, and
+you pick the minute.
 
 **Docker logs capped.** The default is unbounded. An uncapped log will fill the
 disk eventually, and when it does it looks like a database problem for the
