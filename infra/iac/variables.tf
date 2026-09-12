@@ -11,10 +11,16 @@ variable "server_type" {
     line but not between them, so cx23 to cx33 is an in-place resize and cpx22
     to cx33 is a replacement. docs/replace-a-server.md is the second case.
 
-    Check the type is still sold before relying on a default here. Hetzner
-    retires them: cx22 was this default until an apply failed with "Server Type
+        The default is the cheapest type orderable in Europe, so that trying this
+    out costs about a cent an hour. It is not the one to run on. A box with a
+    reverse proxy, a few containers and a database on it wants the 8 GB of a
+    cx33 (EUR 9.99 a month gross against 6.49), and 4 GB is where the memory
+    pressure starts.
+
+    Check the type is still sold before relying on any default here. Hetzner
+    retires them: cx22 was this one until an apply failed with "Server Type
     cx22 is unavailable and can no longer be ordered", and the whole CPX line
-    has left the European datacentres.
+    has since left the European datacentres.
 
     Move this default the moment a replacement applies cleanly. Leaving it at
     the old value means the next plan quietly proposes rescaling back.

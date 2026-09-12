@@ -31,6 +31,10 @@ docs/               the runbook for replacing the machine
 
 ## Using it
 
+The default `server_type` is the cheapest one Hetzner will sell in Europe, so
+trying this costs about a cent an hour. For a box that runs a proxy, containers
+and a database, pick the 8 GB one: 4 GB is where the memory pressure starts.
+
 ```sh
 cd infra/iac
 cp terraform.tfvars.example terraform.tfvars   # edit it
@@ -44,7 +48,9 @@ something to inherit from a file you skimmed.
 `CLOUDFLARE_API_TOKEN` has to be set even before a single DNS record exists.
 The records are declared in the configuration, so OpenTofu configures their
 provider on every plan, and the error when it is missing talks about `api_key`
-rather than about DNS.
+rather than about DNS. Emptying the record lists does not avoid it, and neither
+does putting them in a module with `count = 0`: a declared provider gets
+configured either way.
 
 Then configure the machine. Bootstrap runs once, as root on port 22, because
 that is the state a new server arrives in:
@@ -136,6 +142,21 @@ It stops short of deploying anything, too. What you get is a hardened host with
 Docker on it and a DNS record that resolves to it. Whatever runs there is a
 separate concern, and keeping the 2 apart is why the machine can be replaced
 without touching the application.
+
+## Using another DNS provider
+
+Cloudflare is what is wired up here. Nothing about the idea depends on it: what
+matters is that the record's value is an expression pointing at the server
+rather than an address somebody typed. On Route 53 the same line is:
+
+```hcl
+records = [hcloud_server.prod.ipv4_address]
+```
+
+So moving providers means rewriting `dns.tf` against your own provider's
+record resource, and the Cloudflare token requirement leaves with it. Everything
+else, including the replace runbook, is unchanged: the records are dependents
+of the server whoever serves them.
 
 ## Checks
 
