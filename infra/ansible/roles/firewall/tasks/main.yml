@@ -1,6 +1,19 @@
 # The host firewall, inside the provider's one. Two layers because they fail
 # differently: the cloud firewall is a checkbox in an account somebody else can
 # change, and ufw is a file on the machine that a snapshot carries with it.
+# This role's last task turns the firewall on. If there is no rule for ssh by
+# then, the default policy denies it and the session running this playbook is
+# the one that gets cut off, on a machine that is otherwise fine. Checked
+# first, before anything is changed, so a missing value costs nothing.
+- name: Refuse to configure a firewall with no way in
+  ansible.builtin.assert:
+    that:
+      - ssh_allowed_cidrs | default([]) | length > 0
+    fail_msg: >-
+      ssh_allowed_cidrs is empty. Enabling ufw with no ssh rule locks this
+      session out of the machine, and getting back in means a rescue boot.
+      Set it in group_vars, using ["0.0.0.0/0"] if you really mean anywhere.
+
 - name: Default to denying inbound
   community.general.ufw:
     direction: incoming

@@ -59,6 +59,9 @@
       }
   notify: Restart docker
 
+# Membership of this group is root on the host by another route: anyone in it
+# can bind-mount / into a container and write to it. The trade buys every
+# deploy step not needing sudo, and it is a trade rather than a freebie.
 - name: Let ops use docker without sudo
   ansible.builtin.user:
     name: "{{ ops_user }}"

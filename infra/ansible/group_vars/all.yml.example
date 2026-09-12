@@ -11,7 +11,7 @@ ops_public_key_file: ~/.ssh/id_ed25519_ops.pub
 # Where sshd listens after bootstrap. Moving it off 22 stops nothing
 # determined, it just empties the logs of the untargeted scanning that makes
 # real attempts hard to see. Keep the cloud firewall in front either way.
-ssh_port: 2222
+ssh_port: 2202
 
 # Who may reach that port at the host firewall. The cloud firewall says the
 # same thing one layer out; this is what is left if that is ever misconfigured.
