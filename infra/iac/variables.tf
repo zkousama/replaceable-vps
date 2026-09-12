@@ -87,3 +87,34 @@ variable "rebuild_protection" {
   description = "Provider-side flag. Blocks a rebuild from an image."
   default     = true
 }
+
+variable "cloudflare_zone_id" {
+  type        = string
+  description = "Zone the records below belong to."
+}
+
+variable "a_records" {
+  type        = list(string)
+  description = <<-EOT
+    Names that should resolve to the server's IPv4 address. "@" for the apex.
+    Every name here is one the migration runbook does not have to think about,
+    because the value is a reference rather than an address.
+  EOT
+  default     = ["@", "www"]
+}
+
+variable "aaaa_records" {
+  type        = list(string)
+  description = "Names that should resolve to the server's IPv6 address."
+  default     = ["@", "www"]
+}
+
+variable "proxied" {
+  type        = bool
+  description = <<-EOT
+    Whether the records go through Cloudflare's proxy. Proxied records hide the
+    origin address and pin their TTL to automatic, which is also why a
+    cutover needs no TTL lowering beforehand.
+  EOT
+  default     = true
+}

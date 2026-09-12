@@ -10,3 +10,7 @@ ssh_key_name = "ops-primary"
 # 22 until the bootstrap playbook has moved sshd, then just the new port.
 ssh_ports        = [22]
 ssh_source_cidrs = ["203.0.113.4/32"]
+
+cloudflare_zone_id = "<zone id>"
+a_records          = ["@", "www", "api"]
+aaaa_records       = ["@", "www", "api"]
