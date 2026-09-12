@@ -1,0 +1,14 @@
+- name: Restart sshd
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: restarted
+    daemon_reload: true
+
+# Restarting the socket drops the listener and puts it back on the new port.
+# Existing sessions survive it, which is the only reason this is safe to do
+# from a connection that is itself over ssh.
+- name: Restart ssh socket
+  ansible.builtin.systemd_service:
+    name: ssh.socket
+    state: restarted
+    daemon_reload: true

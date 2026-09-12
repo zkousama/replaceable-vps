@@ -1,0 +1,9 @@
+# Collections these roles use that are not in ansible-core. The `ansible`
+# package bundles all of them, so this matters for the leaner install:
+#
+#   ansible-galaxy collection install -r requirements.yml
+collections:
+  - name: ansible.posix
+    version: ">=1.5.0"
+  - name: community.general
+    version: ">=8.0.0"

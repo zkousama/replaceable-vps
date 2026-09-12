@@ -1,0 +1,52 @@
+# Written as a drop-in rather than as edits to sshd_config. Ubuntu's shipped
+# config ends with an Include of this directory, so a drop-in survives a
+# distribution upgrade replacing the main file, and the whole of our opinion
+# is one file you can read in 10 seconds.
+- name: Install the sshd drop-in
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+    # sshd -t on the candidate file. Without this, a typo here is discovered
+    # by the restart, which is to say by being locked out.
+    validate: /usr/sbin/sshd -t -f %s
+    content: |
+      # Managed by Ansible. Edits here are overwritten.
+      Port {{ ssh_port }}
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      AuthenticationMethods publickey
+      AllowUsers {{ ops_user }}
+      MaxAuthTries 3
+      LoginGraceTime 20
+      X11Forwarding no
+      AllowAgentForwarding no
+      ClientAliveInterval 300
+      ClientAliveCountMax 2
+  notify: Restart sshd
+
+# Ubuntu 24.04 boots ssh from a socket unit, and the socket holds the port. A
+# drop-in that changes Port without this is a change that reverts on reboot,
+# which is a fun one to debug 3 months later.
+- name: Make room for the socket drop-in
+  ansible.builtin.file:
+    path: /etc/systemd/system/ssh.socket.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Point the ssh socket at the same port
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/ssh.socket.d/10-port.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by Ansible.
+      [Socket]
+      ListenStream=
+      ListenStream={{ ssh_port }}
+  notify: Restart ssh socket

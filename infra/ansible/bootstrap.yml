@@ -1,0 +1,61 @@
+# First contact with a fresh machine. Run once, then never again.
+#
+#   ansible-playbook bootstrap.yml -l prod -u root -e ansible_port=22
+#
+# It connects as root on port 22, which is the only state a new server is in,
+# creates the unprivileged user, and moves sshd. From then on every run uses
+# the inventory's own user and port and this file is history.
+#
+# Not merged into site.yml on purpose. A playbook that has to work both before
+# and after it has changed the way you connect ends up full of conditionals
+# about which state it is in, and that is exactly the kind of code that fails
+# at the moment you need it most.
+- name: Bootstrap a new host
+  hosts: all
+  remote_user: root
+  gather_facts: true
+
+  tasks:
+    - name: Create the ops user
+      ansible.builtin.user:
+        name: "{{ ops_user }}"
+        groups: sudo
+        shell: /bin/bash
+        append: true
+        state: present
+
+    - name: Install the ops key
+      ansible.posix.authorized_key:
+        user: "{{ ops_user }}"
+        key: "{{ lookup('file', ops_public_key_file) }}"
+        state: present
+
+    # Passwordless, and worth being deliberate about: every subsequent run is
+    # non-interactive, and the alternative is a sudo password sitting in a
+    # vault that the automation has to read anyway. The account has no
+    # password to guess and no password login to try it on.
+    - name: Let ops sudo without a password
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/90-{{ ops_user }}"
+        content: "{{ ops_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: /usr/sbin/visudo -csf %s
+
+    - name: Prove the new account works before locking the old way out
+      ansible.builtin.command:
+        cmd: "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -p 22 {{ ops_user }}@{{ ansible_host }} true"
+      delegate_to: localhost
+      become: false
+      changed_when: false
+
+- name: Harden the way in
+  hosts: all
+  remote_user: root
+  become: true
+  roles:
+    # Moves the port and turns off root and password logins. Ordered after the
+    # check above for a reason: this is the task that can lock you out, and it
+    # should only run once something has confirmed there is another way in.
+    - ssh
