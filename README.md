@@ -16,9 +16,8 @@ A record defined that way is a dependent of the server rather than a copy of
 its address, so replacing the machine is the entire instruction for a cutover.
 Everything else here follows from wanting that to be true.
 
-I wrote it up in [The bigger server was
-cheaper](https://ousama.pages.dev/writing/the-bigger-server-was-cheaper), which
-is the same pattern with the numbers from a real replacement.
+There is a write-up of a real replacement that used this pattern, with the
+numbers from the day, and this README will link it once it is published.
 
 ## What is in here
 
