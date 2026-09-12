@@ -43,7 +43,7 @@ variable "ssh_port" {
   description = <<-EOT
     Port sshd listens on once the bootstrap playbook has moved it.
 
-    Ansible reads the same number from its own group_vars and the two have to
+    Ansible reads the same number from its own group_vars and the 2 have to
     agree. An earlier version of this had a list here and a scalar there,
     which is a quiet way to end up with a firewall opening a port sshd is not
     listening on.

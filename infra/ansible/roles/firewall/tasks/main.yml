@@ -1,4 +1,4 @@
-# The host firewall, inside the provider's one. Two layers because they fail
+# The host firewall, inside the provider's one. 2 layers because they fail
 # differently: the cloud firewall is a checkbox in an account somebody else can
 # change, and ufw is a file on the machine that a snapshot carries with it.
 # This role's last task turns the firewall on. If there is no rule for ssh by

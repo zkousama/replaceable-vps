@@ -1,9 +1,10 @@
 # One VPS, described in files
 
 OpenTofu and Ansible for a single Hetzner box that runs Docker: the server, its
-firewall, the DNS records that point at it, and the configuration on top. It's deliberately small, and built around one operation: replacing the
-machine with an identical one. That's what you want on the day your provider
-reprices its lineup, or the plan you're on stops being the cheap one.
+firewall, the DNS records that point at it, and the configuration on top. It's
+deliberately small, and built around one operation: replacing the machine with
+an identical one. That's what you want on the day your provider reprices its
+lineup, or the plan you're on stops being the cheap one.
 
 The whole repository is arranged around one line, in
 [`infra/iac/dns.tf`](infra/iac/dns.tf):
@@ -73,65 +74,50 @@ and pushes a notification when the answer changes for the better:
   /usr/local/bin/wait-for-capacity.sh --type cx33 --locations nbg1,hel1
 ```
 
-It compares against the last answer it wrote down, so the notification hangs
-off the transition rather than the state. Fire on the state instead and cron
-pushes every half hour from the moment capacity appears, which is a channel
-you'll mute inside a day.
+It compares against the last answer it wrote down, so the push hangs off the
+transition rather than the state: fire on the state and cron notifies every
+half hour from the moment capacity appears, which is a channel you'll mute
+inside a day. Send a test push and watch it arrive before leaving it running.
 
-It needs curl and python3 and nothing else from this repository, so it works on
-its own. Send a test push and watch it arrive before you leave it running.
+It needs curl and python3 and nothing else from this repository.
 
 ## Decisions, with the reasons
 
-**State in object storage, not on a laptop.** The endpoint hostname carries
-the account id, so it is passed at `init` time rather than committed. R2 keys
-are 32 characters where AWS keys are 20, and mixing them up produces an error
-about key length that takes a while to recognise, so `scripts/preflight.sh`
-checks the shape.
+**State in object storage.** The endpoint hostname carries the account id, so
+it goes in at `init` time rather than into a file. R2 keys are 32 characters
+where AWS keys are 20, and loading the wrong ones fails with a message about
+key length that takes a while to place, so `preflight.sh` checks the shape.
 
-**Two firewalls.** The provider's at the edge, ufw on the machine. The
-provider's is a setting in an account that other people can change, and ufw is
-a file on the box that a snapshot carries along with everything else.
+**2 firewalls.** The provider's at the edge, ufw on the machine. One is a
+setting in an account other people can change, the other is a file a snapshot
+carries with it.
 
-**SSH off its default port.** The reason is log volume rather than security:
-untargeted scanning stops filling the auth log, so a real attempt is easier to
-spot. Key-only auth, `AllowUsers` and fail2ban do the actual work. Moving the
-port means telling fail2ban about it too, or its jail sits there watching a
-port nothing uses.
+**SSH off its default port.** For log volume, not security: untargeted scanning
+stops filling the auth log, so a real attempt is easier to spot. Key-only auth,
+`AllowUsers` and fail2ban do the actual work.
 
-**`prevent_destroy` on the server, hardcoded.** The provider-side delete
-protection blocks the API and the console but not `tofu destroy`, which is a
-different path. `prevent_destroy` is what blocks that path, and it can't be a variable because
-OpenTofu still doesn't accept them in meta-arguments. A deliberate replacement comments it out in a commit that says
-why, and the commit restoring it is the other half of the pair.
+**`prevent_destroy`, hardcoded.** The provider's delete protection blocks the
+API and the console but not `tofu destroy`. This blocks that path, and OpenTofu
+won't take a variable in a meta-argument, so a deliberate replacement comments
+it out in a commit that says why.
 
 **`ignore_changes = [image]`.** Image slugs resolve to numeric ids that rotate
-underneath them, so without this a plan offers to rebuild the server every time
-the distribution publishes a build. It also means a replacement is driven by
-`-replace` rather than by editing the image and waiting for a diff, which is
-the honest way round: the variable says where the new machine comes from, the
-flag asks for a new machine at all.
+underneath them, so without it every plan offers to rebuild the server. It also
+means a replacement is asked for with `-replace` rather than by editing the
+image and waiting for a diff.
 
-**Security updates only, and no automatic reboot.** Unattended upgrades can
-take every available update, not just the security ones, which means new minor
-versions of anything on the box arriving at 6am unannounced. Kernel updates
-still need a reboot; `/var/run/reboot-required` says when one is pending, and
-you pick the minute.
-
-**Docker logs capped.** The default is unbounded. An uncapped log will fill the
-disk eventually, and when it does it looks like a database problem for the
-first 20 minutes.
+The rest of the reasoning lives next to what it describes, in the comments.
 
 ## Scope
 
-One machine, with a reverse proxy in front of containers. If you need 2 servers
-or an orchestrator, start somewhere else: there's nothing here about load
-balancing, scheduling or service discovery, and adding it would mean rewriting
-most of `server.tf`.
+One machine, with a reverse proxy in front of containers, and everything here
+assumes it: the DNS records point at a server rather than at a load balancer,
+and the playbooks configure a host rather than a fleet. More than one machine
+is a different design rather than a bigger version of this one.
 
-It also stops short of deploying anything. What you get is a hardened host with
-Docker on it and a DNS record that resolves to it; whatever runs there is a
-separate concern. Keeping the two apart is why you can replace the machine
+It stops short of deploying anything, too. What you get is a hardened host with
+Docker on it and a DNS record that resolves to it. Whatever runs there is a
+separate concern, and keeping the 2 apart is why the machine can be replaced
 without touching the application.
 
 ## Checks
