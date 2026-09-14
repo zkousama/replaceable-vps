@@ -1,6 +1,6 @@
 # First contact with a fresh machine. Run once, then never again.
 #
-#   ansible-playbook bootstrap.yml -l prod -u root -e ansible_port=22
+#   ansible-playbook bootstrap.yml -l prod -e ansible_port=22
 #
 # It connects as root on port 22, the state a new server arrives in, creates
 # the unprivileged user, and moves sshd. From then on every run uses
