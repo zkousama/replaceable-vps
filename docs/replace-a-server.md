@@ -25,9 +25,9 @@ unimportant either way.
 ```
 
 Every credential checked against the provider that has to accept it. The one
-this exists for is DNS: a plan doesn't call that API until a record changes, so
-a revoked token there stays invisible until the apply that needs it, which is
-halfway through the cutover.
+this exists for is DNS: nothing touches that token between cutovers, so a
+revoked one first shows up when the plan in step 8 reads the records, after the
+snapshot is taken and the protections are off.
 
 Then, in order:
 

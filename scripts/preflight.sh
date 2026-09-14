@@ -4,9 +4,9 @@
 # you start something that needs all of them.
 #
 # The reason this is a script and not a line in a runbook: a token nobody has
-# used for months is a token nobody knows is dead. A plan only calls the DNS
-# provider when a DNS record changes, so a revoked key there stays invisible
-# until the apply that needs it, which is halfway through a cutover.
+# used for months is a token nobody knows is dead. The first plan that reads
+# the DNS records is where a revoked key there shows up, and in a replacement
+# that plan comes after the snapshot is taken and the protections are off.
 #
 # Usage:
 #   ./preflight.sh
