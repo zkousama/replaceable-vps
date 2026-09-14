@@ -7,9 +7,10 @@ variable "server_name" {
 variable "server_type" {
   type        = string
   description = <<-EOT
-        Hetzner server type. The one thing to know: a rescale can move within a
-    line but not between them, so cx23 to cx33 is an in-place resize and cpx22
-    to cx33 is a replacement. docs/replace-a-server.md is the second case.
+        Hetzner server type. A rescale keeps the architecture (x86 or Arm) and
+    can't shrink the disk, and the CPU vendor may change on the way, so cx23 to
+    cx33 is an in-place resize. A smaller disk, another architecture or another
+    location is a replacement, which is docs/replace-a-server.md.
 
         The default is the cheapest type orderable in Europe, so that trying this
     out costs about a cent an hour. It is not the one to run on. A box with a

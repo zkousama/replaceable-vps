@@ -1,9 +1,10 @@
 # Replacing the server
 
-For when the machine has to be a different machine: a type in another family,
-a different location, a rebuild from a known image. A resize inside one family
-isn't this. That's a `server_type` change, an in-place apply, and the provider
-keeps the disk.
+For when the machine has to be a different machine: a different location, a
+type with a smaller disk or another architecture, a rebuild from a known image.
+A resize that keeps the architecture and doesn't shrink the disk isn't this.
+That's a `server_type` change, an in-place apply, and the provider keeps the
+disk.
 
 This one destroys the machine. Read it to the end before starting.
 
